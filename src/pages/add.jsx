@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CATEGORIES, formatMarkdown, generateSlug } from '../utils/mockData';
+import { CATEGORIES, formatMarkdown, generateSlug, POPULAR_TAGS, validateQuestion } from '../utils/mockData';
 import './add.css';
 
 const StackItUploadPage = () => {
@@ -14,24 +14,13 @@ const StackItUploadPage = () => {
     const [files, setFiles] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState({});
+    const [tagInput, setTagInput] = useState('');
+    const [tagList, setTagList] = useState([]);
+    const [showPreview, setShowPreview] = useState(false);
     const textAreaRef = useRef(null);
 
-    const validateForm = () => {
-        const newErrors = {};
-        if (!formData.title.trim()) {
-            newErrors.title = 'Title is required';
-        }
-        if (!formData.category) {
-            newErrors.category = 'Please select a category';
-        }
-        if (!formData.content.trim()) {
-            newErrors.content = 'Content is required';
-        }
-        if (formData.tags && !formData.tags.split(',').some(tag => tag.trim())) {
-            newErrors.tags = 'Please enter valid tags';
-        }
-        return newErrors;
-    };
+    // Improved validation using mockData utility
+    const validateForm = () => validateQuestion({ ...formData, tags: tagList });
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -39,16 +28,39 @@ const StackItUploadPage = () => {
             ...prev,
             [name]: value
         }));
-        // Clear error when user types
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
     };
 
+    // Tag management
+    const handleTagInput = (e) => {
+        setTagInput(e.target.value);
+    };
+    const handleTagKeyDown = (e) => {
+        if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
+            e.preventDefault();
+            addTag(tagInput.trim());
+        }
+    };
+    const addTag = (tag) => {
+        if (tag && !tagList.includes(tag)) {
+            setTagList([...tagList, tag]);
+            setTagInput('');
+        }
+    };
+    const removeTag = (tag) => {
+        setTagList(tagList.filter(t => t !== tag));
+    };
+    const handlePopularTagClick = (tag) => {
+        addTag(tag);
+    };
+
+    // File handling
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         const validFiles = selectedFiles.filter(file => {
-            const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+            const isValidSize = file.size <= 10 * 1024 * 1024;
             if (!isValidSize) {
                 alert(`File ${file.name} is too large. Maximum size is 10MB`);
             }
@@ -56,19 +68,16 @@ const StackItUploadPage = () => {
         });
         setFiles(validFiles);
     };
-
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
         e.currentTarget.classList.add('drag-over');
     };
-
     const handleDragLeave = (e) => {
         e.preventDefault();
         e.stopPropagation();
         e.currentTarget.classList.remove('drag-over');
     };
-
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -84,11 +93,12 @@ const StackItUploadPage = () => {
         setFiles(validFiles);
     };
 
+    // Draft save/load
     const handleSaveDraft = async () => {
-        // Simulate saving to localStorage
         try {
             const draft = {
                 ...formData,
+                tags: tagList,
                 files: files.map(f => f.name),
                 savedAt: new Date().toISOString()
             };
@@ -99,39 +109,41 @@ const StackItUploadPage = () => {
             alert('Failed to save draft');
         }
     };
+    React.useEffect(() => {
+        // Load draft if exists
+        const draft = localStorage.getItem('questionDraft');
+        if (draft) {
+            const data = JSON.parse(draft);
+            setFormData({
+                title: data.title || '',
+                category: data.category || '',
+                content: data.content || '',
+                tags: ''
+            });
+            setTagList(Array.isArray(data.tags) ? data.tags : []);
+            setFiles([]); // Don't auto-load files for security
+        }
+    }, []);
 
+    // Submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = validateForm();
-        
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
         }
-
         setIsSubmitting(true);
-        
         try {
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const formattedTags = formData.tags
-                .split(',')
-                .map(tag => tag.trim())
-                .filter(Boolean);
-
             const questionData = {
                 ...formData,
-                tags: formattedTags,
+                tags: tagList,
                 files: files,
                 slug: generateSlug(formData.title),
                 createdAt: new Date().toISOString()
             };
-
-            // Clear draft after successful submission
             localStorage.removeItem('questionDraft');
-            
-            // Simulate successful submission
             console.log('Submitted question:', questionData);
             alert('Question posted successfully!');
             navigate('/');
@@ -143,28 +155,35 @@ const StackItUploadPage = () => {
         }
     };
 
+    // Markdown formatting
     const formatText = (command) => {
         if (!textAreaRef.current) return;
-
         const formatResult = formatMarkdown(textAreaRef.current.value, command);
         if (!formatResult) return;
-
         const { newText, start } = formatResult;
         const textarea = textAreaRef.current;
         const text = textarea.value;
         const before = text.substring(0, textarea.selectionStart);
         const after = text.substring(textarea.selectionEnd);
-        
         setFormData(prev => ({
             ...prev,
             content: before + newText + after
         }));
-
-        // Set cursor position after formatting
         setTimeout(() => {
             textarea.focus();
             textarea.setSelectionRange(start, start + newText.length);
         }, 0);
+    };
+
+    // Markdown preview (simple)
+    const renderMarkdownPreview = () => {
+        // For demo, just replace code blocks and bold/italic
+        let html = formData.content
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/_(.*?)_/g, '<em>$1</em>')
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+        return { __html: html };
     };
 
     return (
@@ -181,16 +200,16 @@ const StackItUploadPage = () => {
                         </div>
                     </div>
                     <div className="header-actions">
-                        <button className="icon-button" onClick={() => navigate('/')}>
+                        <button className="icon-button" onClick={() => navigate('/')}
+                            aria-label="Go to Home">
                             <span className="material-symbols-outlined">search</span>
                         </button>
                         <button className="ask-button" onClick={() => navigate('/add')}>Ask Question</button>
                     </div>
                 </div>
             </header>
-
-            <main className="main-content">
-                <aside className="sidebar">
+            <main className="main-content" style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', gap: '2rem', width: '100%' }}>
+                <aside className="sidebar" style={{ minWidth: 220, maxWidth: 260 }}>
                     <nav className="nav-menu">
                         <a href="/" className="nav-item">
                             <span className="material-symbols-outlined nav-item-icon">home</span>
@@ -213,7 +232,6 @@ const StackItUploadPage = () => {
                             <span>Users</span>
                         </a>
                     </nav>
-
                     <div className="guidelines-box">
                         <h3 className="guidelines-title">Upload Guidelines</h3>
                         <ul className="guidelines-list">
@@ -225,13 +243,12 @@ const StackItUploadPage = () => {
                         </ul>
                     </div>
                 </aside>
-
-                <section className="main-section">
-                    <div className="content-box">
-                        <h2 className="content-title">Upload Content</h2>
-                        <form onSubmit={handleSubmit} className="form-content">
-                            <div className="form-group">
-                                <label htmlFor="title" className="form-label">Title</label>
+                <section className="main-section" style={{ flex: 1, minWidth: 0 }}>
+                    <div className="content-box" style={{ maxWidth: '100%', minWidth: 400, margin: '0', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', background: '#1a2e37', borderRadius: 12 }}>
+                        <h2 className="content-title" style={{ textAlign: 'left', marginBottom: '2rem', fontSize: '2rem' }}>Upload Content</h2>
+                        <form onSubmit={handleSubmit} className="form-content" autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label htmlFor="title" className="form-label" style={{ fontWeight: 500 }}>Title</label>
                                 <input
                                     type="text"
                                     id="title"
@@ -241,18 +258,25 @@ const StackItUploadPage = () => {
                                     value={formData.title}
                                     onChange={handleInputChange}
                                     maxLength={150}
+                                    required
+                                    aria-invalid={!!errors.title}
+                                    aria-describedby="title-error"
+                                    style={{ width: '100%', fontSize: '1rem' }}
                                 />
-                                {errors.title && <div className="error-message">{errors.title}</div>}
+                                {errors.title && <div className="error-message" id="title-error">{errors.title}</div>}
                             </div>
-
-                            <div className="form-group">
-                                <label htmlFor="category" className="form-label">Category</label>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label htmlFor="category" className="form-label" style={{ fontWeight: 500 }}>Category</label>
                                 <select 
                                     id="category"
                                     name="category"
                                     className={`form-input ${errors.category ? 'error' : ''}`}
                                     value={formData.category}
                                     onChange={handleInputChange}
+                                    required
+                                    aria-invalid={!!errors.category}
+                                    aria-describedby="category-error"
+                                    style={{ width: '100%', fontSize: '1rem' }}
                                 >
                                     <option value="">Select a category</option>
                                     {CATEGORIES.map(cat => (
@@ -261,13 +285,12 @@ const StackItUploadPage = () => {
                                         </option>
                                     ))}
                                 </select>
-                                {errors.category && <div className="error-message">{errors.category}</div>}
+                                {errors.category && <div className="error-message" id="category-error">{errors.category}</div>}
                             </div>
-
-                            <div className="form-group">
-                                <label htmlFor="content" className="form-label">Content</label>
-                                <div className="editor-container">
-                                    <div className="editor-toolbar">
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label htmlFor="content" className="form-label" style={{ fontWeight: 500 }}>Content</label>
+                                <div className="editor-container" style={{ borderRadius: 8, overflow: 'hidden' }}>
+                                    <div className="editor-toolbar" style={{ display: 'flex', gap: '0.5rem', background: '#16232e', padding: '0.5rem 0.75rem', borderRadius: '8px 8px 0 0' }}>
                                         {['bold', 'italic', 'bullet', 'number', 'code', 'link', 'image'].map(cmd => (
                                             <button
                                                 key={cmd}
@@ -275,6 +298,8 @@ const StackItUploadPage = () => {
                                                 className="toolbar-button"
                                                 onClick={() => formatText(cmd)}
                                                 title={`Insert ${cmd}`}
+                                                tabIndex={0}
+                                                style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
                                             >
                                                 <span className="material-symbols-outlined">
                                                     {cmd === 'bullet' ? 'format_list_bulleted' :
@@ -283,6 +308,15 @@ const StackItUploadPage = () => {
                                                 </span>
                                             </button>
                                         ))}
+                                        <button
+                                            type="button"
+                                            className="toolbar-button"
+                                            onClick={() => setShowPreview(prev => !prev)}
+                                            title="Toggle Markdown Preview"
+                                            style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
+                                        >
+                                            <span className="material-symbols-outlined">visibility</span>
+                                        </button>
                                     </div>
                                     <textarea
                                         ref={textAreaRef}
@@ -292,29 +326,57 @@ const StackItUploadPage = () => {
                                         placeholder="Write your content here..."
                                         value={formData.content}
                                         onChange={handleInputChange}
+                                        required
+                                        aria-invalid={!!errors.content}
+                                        aria-describedby="content-error"
+                                        style={{ minHeight: 180, fontSize: '1rem', borderRadius: '0 0 8px 8px', padding: '1rem', background: '#1a2e37', color: '#f5eed', border: 'none', width: '100%' }}
                                     />
                                 </div>
-                                {errors.content && <div className="error-message">{errors.content}</div>}
+                                {errors.content && <div className="error-message" id="content-error">{errors.content}</div>}
+                                {showPreview && (
+                                    <div className="markdown-preview" style={{ marginTop: '1rem', background: '#1a2e37', padding: '1rem', borderRadius: '6px', color: '#f5eed', border: '1px solid #2d3748' }}>
+                                        <div dangerouslySetInnerHTML={renderMarkdownPreview()} />
+                                    </div>
+                                )}
                             </div>
-
-                            <div className="form-group">
-                                <label htmlFor="tags" className="form-label">Tags</label>
-                                <input
-                                    type="text"
-                                    id="tags"
-                                    name="tags"
-                                    className={`form-input ${errors.tags ? 'error' : ''}`}
-                                    placeholder="Add tags separated by commas (e.g., javascript, react, node.js)"
-                                    value={formData.tags}
-                                    onChange={handleInputChange}
-                                />
-                                {errors.tags && <div className="error-message">{errors.tags}</div>}
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                <label htmlFor="tags" className="form-label" style={{ fontWeight: 500 }}>Tags</label>
+                                <div className="tag-input-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <input
+                                        type="text"
+                                        id="tags"
+                                        name="tags"
+                                        className={`form-input ${errors.tags ? 'error' : ''}`}
+                                        placeholder="Type a tag and press Enter or Comma"
+                                        value={tagInput}
+                                        onChange={handleTagInput}
+                                        onKeyDown={handleTagKeyDown}
+                                        aria-describedby="tags-error"
+                                        style={{ width: '100%', fontSize: '1rem' }}
+                                    />
+                                    <div className="tag-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        {tagList.map(tag => (
+                                            <span className="tag-item" key={tag} style={{ background: '#7ae2cf', color: '#06202b', borderRadius: 16, padding: '0.25rem 0.75rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                {tag}
+                                                <button type="button" className="remove-tag" onClick={() => removeTag(tag)} aria-label={`Remove tag ${tag}`} style={{ background: 'none', border: 'none', color: '#06202b', marginLeft: 4, fontSize: '1rem', cursor: 'pointer' }}>&times;</button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <div className="popular-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                                        <span style={{ color: '#888', fontSize: '0.85em', marginRight: 8 }}>Popular:</span>
+                                        {POPULAR_TAGS.slice(0, 8).map(tagObj => (
+                                            <button type="button" className="tag-suggestion" key={tagObj.name} onClick={() => handlePopularTagClick(tagObj.name)} style={{ background: '#243642', color: '#7ae2cf', border: 'none', borderRadius: 12, padding: '0.25rem 0.75rem', fontSize: '0.95em', cursor: 'pointer', fontWeight: 500 }}>
+                                                {tagObj.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                {errors.tags && <div className="error-message" id="tags-error">{errors.tags}</div>}
                             </div>
-
-                            <div className="attachment-section">
-                                <div className="attachment-header">
+                            <div className="attachment-section" style={{ borderRadius: 8, border: '1px solid #2d3748', background: '#16232e', marginTop: '1rem' }}>
+                                <div className="attachment-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                                     <span className="material-symbols-outlined attachment-icon">attach_file</span>
-                                    <h3 className="attachment-title">Attachments</h3>
+                                    <h3 className="attachment-title" style={{ fontWeight: 500, color: '#f5eed', margin: 0 }}>Attachments</h3>
                                 </div>
                                 <div 
                                     className="upload-zone"
@@ -322,16 +384,20 @@ const StackItUploadPage = () => {
                                     onDragLeave={handleDragLeave}
                                     onDrop={handleDrop}
                                     onClick={() => document.getElementById('file-input').click()}
+                                    tabIndex={0}
+                                    role="button"
+                                    aria-label="Upload files"
+                                    style={{ border: '2px dashed #7ae2cf', borderRadius: 8, padding: '1.5rem', textAlign: 'center', background: '#1a2e37', cursor: 'pointer', transition: 'all 0.2s' }}
                                 >
-                                    <div className="upload-content">
-                                        <span className="material-symbols-outlined upload-icon">cloud_upload</span>
-                                        <p className="upload-text">
+                                    <div className="upload-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                                        <span className="material-symbols-outlined upload-icon" style={{ fontSize: '2.2rem', color: '#7ae2cf' }}>cloud_upload</span>
+                                        <p className="upload-text" style={{ color: '#f5eed', margin: 0 }}>
                                             {files.length > 0 
                                                 ? `${files.length} file(s) selected: ${files.map(f => f.name).join(', ')}` 
                                                 : "Drag and drop files here or click to browse"
                                             }
                                         </p>
-                                        <p className="upload-size">Max file size: 10MB</p>
+                                        <p className="upload-size" style={{ color: '#888', fontSize: '0.9em', margin: 0 }}>Max file size: 10MB</p>
                                         <input 
                                             type="file"
                                             id="file-input"
@@ -344,13 +410,13 @@ const StackItUploadPage = () => {
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="form-actions">
+                            <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '2rem', justifyContent: 'flex-end', width: '100%' }}>
                                 <button 
                                     type="button" 
                                     className="draft-button" 
                                     onClick={handleSaveDraft}
                                     disabled={isSubmitting}
+                                    style={{ background: '#243642', color: '#7ae2cf', borderRadius: 6, padding: '0.75rem 1.5rem', fontWeight: 500, border: 'none', fontSize: '1rem', cursor: 'pointer' }}
                                 >
                                     Save Draft
                                 </button>
@@ -358,6 +424,7 @@ const StackItUploadPage = () => {
                                     type="submit" 
                                     className="publish-button"
                                     disabled={isSubmitting}
+                                    style={{ background: '#7ae2cf', color: '#06202b', borderRadius: 6, padding: '0.75rem 1.5rem', fontWeight: 500, border: 'none', fontSize: '1rem', cursor: 'pointer' }}
                                 >
                                     {isSubmitting ? 'Publishing...' : 'Publish Content'}
                                 </button>
