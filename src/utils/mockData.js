@@ -10,6 +10,56 @@ export const MOCK_QUESTIONS = [
     category: "question"
   },
   {
+    id: 9,
+    title: "How to concatenate first and last name in SQL Server?",
+    description: "I want to display full names by combining first and last name columns in SQL Server. What's the best way?",
+    username: "DBBeginner",
+    tags: ["sql", "database", "sql-server"],
+    timeAgo: "10 mins",
+    answers: 1,
+    category: "question"
+  },
+  {
+    id: 10,
+    title: "Combine columns in MySQL for reporting",
+    description: "For reporting purposes, I need to merge two columns into one in MySQL. Is there a function for this?",
+    username: "ReportGuy",
+    tags: ["sql", "mysql", "database"],
+    timeAgo: "20 mins",
+    answers: 2,
+    category: "question"
+  },
+  {
+    id: 11,
+    title: "How to use CONCAT_WS in SQL for multiple columns?",
+    description: "Can someone explain how CONCAT_WS works in SQL and when to use it for joining columns?",
+    username: "ConcatFan",
+    tags: ["sql", "database", "concat"],
+    timeAgo: "25 mins",
+    answers: 3,
+    category: "question"
+  },
+  {
+    id: 12,
+    title: "Best way to join columns in PostgreSQL?",
+    description: "Is there a recommended way to join columns in PostgreSQL for creating a full name field?",
+    username: "PostgresPro",
+    tags: ["sql", "database", "postgresql"],
+    timeAgo: "30 mins",
+    answers: 2,
+    category: "question"
+  },
+  {
+    id: 13,
+    title: "How to merge columns in SQLite?",
+    description: "Trying to merge two columns in SQLite. Is there a built-in function for this?",
+    username: "LiteUser",
+    tags: ["sql", "database", "sqlite"],
+    timeAgo: "35 mins",
+    answers: 1,
+    category: "question"
+  },
+  {
     id: 2,
     title: "React useEffect not working as expected with dependencies",
     description: "I'm trying to implement a side effect in my React component that should run whenever certain props change, but I'm running into an infinite loop issue...",
