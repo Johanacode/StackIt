@@ -39,6 +39,27 @@ const StackItUploadPage = () => {
         };
     }, [showEmojiPicker]);
 
+    // Load draft on component mount
+    useEffect(() => {
+        // Load draft if exists
+        const draft = localStorage.getItem('questionDraft');
+        if (draft) {
+            try {
+                const data = JSON.parse(draft);
+                setFormData({
+                    title: data.title || '',
+                    category: data.category || '',
+                    content: data.content || '',
+                    tags: ''
+                });
+                setTagList(Array.isArray(data.tags) ? data.tags : []);
+                setFiles([]); // Don't auto-load files for security
+            } catch (error) {
+                console.error('Error loading draft:', error);
+            }
+        }
+    }, []);
+
     // Improved validation using mockData utility
     const validateForm = () => validateQuestion({ ...formData, tags: tagList });
 
@@ -57,21 +78,25 @@ const StackItUploadPage = () => {
     const handleTagInput = (e) => {
         setTagInput(e.target.value);
     };
+
     const handleTagKeyDown = (e) => {
         if ((e.key === 'Enter' || e.key === ',') && tagInput.trim()) {
             e.preventDefault();
             addTag(tagInput.trim());
         }
     };
+
     const addTag = (tag) => {
         if (tag && !tagList.includes(tag)) {
             setTagList([...tagList, tag]);
             setTagInput('');
         }
     };
+
     const removeTag = (tag) => {
         setTagList(tagList.filter(t => t !== tag));
     };
+
     const handlePopularTagClick = (tag) => {
         addTag(tag);
     };
@@ -88,16 +113,19 @@ const StackItUploadPage = () => {
         });
         setFiles(validFiles);
     };
+
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
         e.currentTarget.classList.add('drag-over');
     };
+
     const handleDragLeave = (e) => {
         e.preventDefault();
         e.stopPropagation();
         e.currentTarget.classList.remove('drag-over');
     };
+
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -129,33 +157,28 @@ const StackItUploadPage = () => {
             alert('Failed to save draft');
         }
     };
-    React.useEffect(() => {
-        // Load draft if exists
-        const draft = localStorage.getItem('questionDraft');
-        if (draft) {
-            const data = JSON.parse(draft);
-            setFormData({
-                title: data.title || '',
-                category: data.category || '',
-                content: data.content || '',
-                tags: ''
-            });
-            setTagList(Array.isArray(data.tags) ? data.tags : []);
-            setFiles([]); // Don't auto-load files for security
-        }
-    }, []);
 
     // Submission
     const handleSubmit = async (e) => {
         e.preventDefault();
         const newErrors = validateForm();
+        console.log("Validation check:", newErrors);
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
+            console.log("Form Data:", { ...formData, tags: tagList });
+            console.warn("Form has validation errors:", newErrors);
             return;
         }
+
+        if (tagList.length === 0) {
+            setErrors(prev => ({ ...prev, tags: "Please add at least one tag" }));
+            console.warn("No tags provided");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1000));
             const questionData = {
                 ...formData,
                 tags: tagList,
@@ -163,8 +186,13 @@ const StackItUploadPage = () => {
                 slug: generateSlug(formData.title),
                 createdAt: new Date().toISOString()
             };
+            console.log("Submitting question:", questionData);
+
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // Clear draft and show success
             localStorage.removeItem('questionDraft');
-            console.log('Submitted question:', questionData);
             alert('Question posted successfully!');
             navigate('/');
         } catch (error) {
@@ -503,7 +531,7 @@ const StackItUploadPage = () => {
                                 </div>
                                 {errors.tags && <div className="error-message" id="tags-error">{errors.tags}</div>}
                             </div>
-                            <div className="attachment-section" style={{ borderRadius: 8, border: '1px solid #2d3748', background: '#16232e', marginTop: '1rem' }}>
+                            <div className="attachment-section" style={{ borderRadius: 8, border: '1px solid #2d3748', background: '#16232e', marginTop: '1rem', padding: '1rem' }}>
                                 <div className="attachment-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                                     <span className="material-symbols-outlined attachment-icon">attach_file</span>
                                     <h3 className="attachment-title" style={{ fontWeight: 500, color: '#f5eed', margin: 0 }}>Attachments</h3>
