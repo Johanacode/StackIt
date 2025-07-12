@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_QUESTIONS } from '../utils/mockData';
+import { MOCK_QUESTIONS, EMOJI_CATEGORIES } from '../utils/mockData';
 import './QuestionDetail.css';
 
 const QuestionDetail = () => {
@@ -64,8 +64,10 @@ const QuestionDetail = () => {
         q.id !== question.id && q.tags.some(tag => question.tags.includes(tag))
     ).slice(0, 5);
 
-    // Emoji options for comments
-    const emojiList = ['😊', '👍', '🎉', '😢', '😂', '🔥', '💡', '❓'];
+    // Emoji options for comments - using comprehensive emoji list
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [selectedEmojiCategory, setSelectedEmojiCategory] = useState('smileys');
+    const quickEmojis = ['😊', '👍', '🎉', '😢', '😂', '🔥', '💡', '❓']; // Quick access emojis
 
     // For reply input
     const [replyInputs, setReplyInputs] = useState({});
@@ -167,12 +169,95 @@ const QuestionDetail = () => {
                             <button onClick={handleAddComment} style={{ background: '#7ae2cf', color: '#06202b', borderRadius: 6, padding: '0.5rem 1rem', fontWeight: 500, border: 'none', fontSize: '1rem', cursor: 'pointer' }}>
                                 Comment
                             </button>
-                            {/* Emoji picker */}
-                            {emojiList.map(emoji => (
-                                <button key={emoji} type="button" onClick={() => handleAddEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer' }}>
-                                    {emoji}
+                            
+                            {/* Quick emoji picker */}
+                            <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                                {quickEmojis.map(emoji => (
+                                    <button key={emoji} type="button" onClick={() => handleAddEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', padding: '0.25rem', borderRadius: 4 }}>
+                                        {emoji}
+                                    </button>
+                                ))}
+                                
+                                {/* More emojis button */}
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowEmojiPicker(prev => !prev)}
+                                    style={{ background: 'none', border: '1px solid #7ae2cf', color: '#7ae2cf', fontSize: '0.8rem', cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4 }}
+                                >
+                                    More
                                 </button>
-                            ))}
+                            </div>
+                            
+                            {/* Extended emoji picker */}
+                            {showEmojiPicker && (
+                                <div style={{ 
+                                    position: 'absolute', 
+                                    top: '100%', 
+                                    left: 0, 
+                                    background: '#1a2e37', 
+                                    border: '1px solid #2d3748', 
+                                    borderRadius: 8, 
+                                    padding: '1rem', 
+                                    zIndex: 1000,
+                                    width: '300px',
+                                    maxHeight: '400px',
+                                    overflowY: 'auto',
+                                    marginTop: '0.5rem'
+                                }}>
+                                    {/* Category tabs */}
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+                                        {Object.entries(EMOJI_CATEGORIES).map(([key, category]) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => setSelectedEmojiCategory(key)}
+                                                style={{
+                                                    background: selectedEmojiCategory === key ? '#7ae2cf' : 'transparent',
+                                                    color: selectedEmojiCategory === key ? '#06202b' : '#7ae2cf',
+                                                    border: '1px solid #7ae2cf',
+                                                    borderRadius: 4,
+                                                    padding: '0.25rem 0.5rem',
+                                                    fontSize: '0.8rem',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                {category.name.split(' ')[0]}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    
+                                    {/* Emoji grid */}
+                                    <div style={{ 
+                                        display: 'grid', 
+                                        gridTemplateColumns: 'repeat(8, 1fr)', 
+                                        gap: '0.25rem' 
+                                    }}>
+                                        {EMOJI_CATEGORIES[selectedEmojiCategory].emojis.map((emoji, index) => (
+                                            <button
+                                                key={index}
+                                                type="button"
+                                                onClick={() => {
+                                                    handleAddEmoji(emoji);
+                                                    setShowEmojiPicker(false);
+                                                }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    fontSize: '1.2rem',
+                                                    cursor: 'pointer',
+                                                    padding: '0.25rem',
+                                                    borderRadius: 4,
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.target.style.background = 'rgba(122, 226, 207, 0.1)'}
+                                                onMouseLeave={(e) => e.target.style.background = 'none'}
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

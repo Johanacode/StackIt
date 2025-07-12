@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CATEGORIES, formatMarkdown, generateSlug, POPULAR_TAGS, validateQuestion } from '../utils/mockData';
+import { CATEGORIES, formatMarkdown, generateSlug, POPULAR_TAGS, validateQuestion, EMOJI_CATEGORIES, insertEmoji } from '../utils/mockData';
 import './add.css';
 
 const StackItUploadPage = () => {
@@ -17,7 +17,27 @@ const StackItUploadPage = () => {
     const [tagInput, setTagInput] = useState('');
     const [tagList, setTagList] = useState([]);
     const [showPreview, setShowPreview] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [selectedEmojiCategory, setSelectedEmojiCategory] = useState('smileys');
     const textAreaRef = useRef(null);
+    const emojiPickerRef = useRef(null);
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        if (showEmojiPicker) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEmojiPicker]);
 
     // Improved validation using mockData utility
     const validateForm = () => validateQuestion({ ...formData, tags: tagList });
@@ -175,14 +195,23 @@ const StackItUploadPage = () => {
         }, 0);
     };
 
+    // Handle emoji insertion
+    const handleEmojiInsert = (emoji) => {
+        insertEmoji(emoji, textAreaRef, setFormData);
+        setShowEmojiPicker(false);
+    };
+
     // Markdown preview (simple)
     const renderMarkdownPreview = () => {
-        // For demo, just replace code blocks and bold/italic
+        // Enhanced markdown preview with support for new formatting
         let html = formData.content
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/_(.*?)_/g, '<em>$1</em>')
-            .replace(/`([^`]+)`/g, '<code>$1</code>')
-            .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            .replace(/~~(.*?)~~/g, '<del>$1</del>')
+            .replace(/`([^`]+)`/g, '<code style="background: #243642; padding: 0.2rem 0.4rem; border-radius: 3px;">$1</code>')
+            .replace(/```([\s\S]*?)```/g, '<pre style="background: #243642; padding: 1rem; border-radius: 6px; overflow-x: auto;"><code>$1</code></pre>')
+            .replace(/<div style="text-align: (left|center|right)">\n(.*?)\n<\/div>/g, '<div style="text-align: $1; margin: 0.5rem 0;">$2</div>')
+            .replace(/\n/g, '<br>');
         return { __html: html };
     };
 
@@ -290,8 +319,9 @@ const StackItUploadPage = () => {
                             <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                 <label htmlFor="content" className="form-label" style={{ fontWeight: 500 }}>Content</label>
                                 <div className="editor-container" style={{ borderRadius: 8, overflow: 'hidden' }}>
-                                    <div className="editor-toolbar" style={{ display: 'flex', gap: '0.5rem', background: '#16232e', padding: '0.5rem 0.75rem', borderRadius: '8px 8px 0 0' }}>
-                                        {['bold', 'italic', 'bullet', 'number', 'code', 'link', 'image'].map(cmd => (
+                                    <div className="editor-toolbar" style={{ display: 'flex', gap: '0.5rem', background: '#16232e', padding: '0.5rem 0.75rem', borderRadius: '8px 8px 0 0', flexWrap: 'wrap' }}>
+                                        {/* Text formatting buttons */}
+                                        {['bold', 'italic', 'strikethrough'].map(cmd => (
                                             <button
                                                 key={cmd}
                                                 type="button"
@@ -302,12 +332,112 @@ const StackItUploadPage = () => {
                                                 style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
                                             >
                                                 <span className="material-symbols-outlined">
-                                                    {cmd === 'bullet' ? 'format_list_bulleted' :
-                                                     cmd === 'number' ? 'format_list_numbered' :
-                                                     `format_${cmd}`}
+                                                    {cmd === 'strikethrough' ? 'strikethrough_s' : `format_${cmd}`}
                                                 </span>
                                             </button>
                                         ))}
+                                        
+                                        {/* List buttons */}
+                                        {['bullet', 'number'].map(cmd => (
+                                            <button
+                                                key={cmd}
+                                                type="button"
+                                                className="toolbar-button"
+                                                onClick={() => formatText(cmd)}
+                                                title={`Insert ${cmd === 'bullet' ? 'bullet points' : 'numbered list'}`}
+                                                tabIndex={0}
+                                                style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    {cmd === 'bullet' ? 'format_list_bulleted' : 'format_list_numbered'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                        
+                                        {/* Text alignment buttons */}
+                                        {['align_left', 'align_center', 'align_right'].map(cmd => (
+                                            <button
+                                                key={cmd}
+                                                type="button"
+                                                className="toolbar-button"
+                                                onClick={() => formatText(cmd)}
+                                                title={`Align ${cmd.split('_')[1]}`}
+                                                tabIndex={0}
+                                                style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    {cmd === 'align_left' ? 'format_align_left' : 
+                                                     cmd === 'align_center' ? 'format_align_center' : 'format_align_right'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                        
+                                        {/* Other formatting buttons */}
+                                        {['code', 'link', 'image'].map(cmd => (
+                                            <button
+                                                key={cmd}
+                                                type="button"
+                                                className="toolbar-button"
+                                                onClick={() => formatText(cmd)}
+                                                title={`Insert ${cmd}`}
+                                                tabIndex={0}
+                                                style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
+                                            >
+                                                <span className="material-symbols-outlined">
+                                                    {cmd === 'code' ? 'code' : 
+                                                     cmd === 'link' ? 'link' : 'image'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                        
+                                        {/* Emoji picker button */}
+                                        <div style={{ position: 'relative' }} ref={emojiPickerRef}>
+                                            <button
+                                                type="button"
+                                                className="toolbar-button"
+                                                onClick={() => setShowEmojiPicker(prev => !prev)}
+                                                title="Insert emoji"
+                                                style={{ background: 'none', border: 'none', color: '#7ae2cf', fontSize: '1.1rem', borderRadius: 4, padding: '0.25rem 0.5rem' }}
+                                            >
+                                                <span className="material-symbols-outlined">sentiment_satisfied</span>
+                                            </button>
+                                            
+                                            {/* Emoji picker dropdown */}
+                                            {showEmojiPicker && (
+                                                <div className="emoji-picker">
+                                                    {/* Category tabs */}
+                                                    <div className="emoji-category-tabs">
+                                                        {Object.entries(EMOJI_CATEGORIES).map(([key, category]) => (
+                                                            <button
+                                                                key={key}
+                                                                type="button"
+                                                                className={`emoji-category-tab ${selectedEmojiCategory === key ? 'active' : ''}`}
+                                                                onClick={() => setSelectedEmojiCategory(key)}
+                                                            >
+                                                                {category.name.split(' ')[0]}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                    
+                                                    {/* Emoji grid */}
+                                                    <div className="emoji-grid">
+                                                        {EMOJI_CATEGORIES[selectedEmojiCategory].emojis.map((emoji, index) => (
+                                                            <button
+                                                                key={index}
+                                                                type="button"
+                                                                className="emoji-button"
+                                                                onClick={() => handleEmojiInsert(emoji)}
+                                                                title={emoji}
+                                                            >
+                                                                {emoji}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Preview toggle button */}
                                         <button
                                             type="button"
                                             className="toolbar-button"
