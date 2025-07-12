@@ -325,7 +325,7 @@ export const generateSlug = (title) => {
 
 export function validateQuestion(formData) {
     const errors = {};
-    
+
     if (!formData.title.trim()) {
         errors.title = 'Title is required';
     } else if (formData.title.length < 15) {
@@ -333,20 +333,25 @@ export function validateQuestion(formData) {
     } else if (formData.title.length > 150) {
         errors.title = 'Title must not exceed 150 characters';
     }
-    
+
     if (!formData.content.trim()) {
         errors.content = 'Content is required';
     } else if (formData.content.length < 30) {
         errors.content = 'Content must be at least 30 characters';
     }
-    
+
     if (!formData.category) {
         errors.category = 'Category is required';
     }
-    
-    if (formData.tags && !formData.tags.split(',').some(tag => tag.trim())) {
+
+    // ✅ Handle tags as array OR string
+    if (!formData.tags || (
+        Array.isArray(formData.tags)
+            ? formData.tags.filter(tag => tag.trim()).length === 0
+            : formData.tags.split(',').filter(tag => tag.trim()).length === 0
+    )) {
         errors.tags = 'At least one valid tag is required';
     }
-    
+
     return errors;
 }
