@@ -207,3 +207,73 @@
         font-size: 0.9rem;
     }
 }
+
+/* Responsive adjustments for comment toolbar */
+@media (max-width: 768px) {
+    .comment-section .toolbar {
+        gap: 0.25rem;
+        padding: 0.5rem;
+    }
+    
+    .comment-section .toolbar-button {
+        padding: 0.4rem;
+        font-size: 0.9rem;
+    }
+    
+    .comment-section .emoji-picker {
+        width: 300px;
+        right: 0;
+        left: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .comment-section .emoji-picker {
+        width: 280px;
+        max-height: 300px;
+    }
+}
+
+/* Rich Text Editor Styles for Comments */
+.comment-section .toolbar-button {
+    background: none !important;
+    border: 1px solid #2d3748 !important;
+    color: #f5eed !important;
+    padding: 0.5rem !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 1rem !important;
+    transition: all 0.2s ease !important;
+    position: relative !important;
+}
+
+.comment-section .toolbar-button:hover {
+    background: rgba(122, 226, 207, 0.1) !important;
+    border-color: #7ae2cf !important;
+    color: #7ae2cf !important;
+    transform: translateY(-1px) !important;
+}
+
+.comment-section .toolbar-button:active {
+    transform: translateY(0) !important;
+}
+
+.comment-section .toolbar-button:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+}
+
+.comment-section .emoji-picker {
+    background: #1a2e37 !important;
+    border: 1px solid #2d3748 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.comment-section .emoji-picker button:hover {
+    background: rgba(122, 226, 207, 0.1) !important;
+}
+
+.comment-section .emoji-picker-container {
+    position: relative !important;
+}

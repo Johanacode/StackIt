@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_QUESTIONS, EMOJI_CATEGORIES } from '../utils/mockData';
+import { MOCK_QUESTIONS, EMOJI_CATEGORIES, formatMarkdown, insertEmoji } from '../utils/mockData';
 import './QuestionDetail.css';
 
 const QuestionDetail = () => {
@@ -26,6 +26,10 @@ const QuestionDetail = () => {
         },
     ]);
     const [newComment, setNewComment] = useState('');
+    const [showCommentPreview, setShowCommentPreview] = useState(false);
+    const [showCommentEmojiPicker, setShowCommentEmojiPicker] = useState(false);
+    const [selectedCommentEmojiCategory, setSelectedCommentEmojiCategory] = useState('smileys');
+    const commentTextAreaRef = useRef(null);
 
     // (already declared above, remove duplicate)
     const question = MOCK_QUESTIONS.find(q => String(q.id) === String(id));
@@ -64,10 +68,33 @@ const QuestionDetail = () => {
         q.id !== question.id && q.tags.some(tag => question.tags.includes(tag))
     ).slice(0, 5);
 
-    // Emoji options for comments - using comprehensive emoji list
-    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [selectedEmojiCategory, setSelectedEmojiCategory] = useState('smileys');
-    const quickEmojis = ['😊', '👍', '🎉', '😢', '😂', '🔥', '💡', '❓']; // Quick access emojis
+    // Rich text editor functions for comments
+    const handleCommentFormat = (command) => {
+        const result = formatMarkdown(newComment, command);
+        if (result) {
+            setNewComment(commentTextAreaRef.current.value);
+            setTimeout(() => {
+                commentTextAreaRef.current.focus();
+                commentTextAreaRef.current.setSelectionRange(result.start, result.end);
+            }, 0);
+        }
+    };
+
+    const handleCommentEmojiInsert = (emoji) => {
+        insertEmoji(emoji, commentTextAreaRef, (prev) => setNewComment(prev.content || newComment + emoji));
+        setShowCommentEmojiPicker(false);
+    };
+
+    // Click outside handler for emoji picker
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (showCommentEmojiPicker && !event.target.closest('.emoji-picker-container')) {
+                setShowCommentEmojiPicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showCommentEmojiPicker]);
 
     // For reply input
     const [replyInputs, setReplyInputs] = useState({});
@@ -77,9 +104,6 @@ const QuestionDetail = () => {
     const handleReplySubmit = (id) => {
         handleAddReply(id, replyInputs[id] || '');
         setReplyInputs({ ...replyInputs, [id]: '' });
-    };
-    const handleAddEmoji = (emoji) => {
-        setNewComment(newComment + emoji);
     };
 
     return (
@@ -158,106 +182,400 @@ const QuestionDetail = () => {
                                 </li>
                             ))}
                         </ul>
-                        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                            <input
-                                type="text"
-                                value={newComment}
-                                onChange={e => setNewComment(e.target.value)}
-                                placeholder="Add a comment..."
-                                style={{ flex: 1, padding: '0.5rem', borderRadius: 6, border: '1px solid #2d3748', background: '#06202b', color: '#f5eed' }}
-                            />
-                            <button onClick={handleAddComment} style={{ background: '#7ae2cf', color: '#06202b', borderRadius: 6, padding: '0.5rem 1rem', fontWeight: 500, border: 'none', fontSize: '1rem', cursor: 'pointer' }}>
-                                Comment
-                            </button>
+                        
+                        {/* Enhanced Comment Input with Rich Text Editor */}
+                        <div className="comment-section" style={{ marginTop: '2rem', background: '#1a2e37', borderRadius: 8, padding: '1.5rem' }}>
+                            <h4 style={{ marginBottom: '1rem', color: '#7ae2cf' }}>Add Your Comment</h4>
                             
-                            {/* Quick emoji picker */}
-                            <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
-                                {quickEmojis.map(emoji => (
-                                    <button key={emoji} type="button" onClick={() => handleAddEmoji(emoji)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', padding: '0.25rem', borderRadius: 4 }}>
-                                        {emoji}
-                                    </button>
-                                ))}
-                                
-                                {/* More emojis button */}
+                            {/* Rich Text Toolbar */}
+                            <div className="toolbar" style={{ 
+                                display: 'flex', 
+                                gap: '0.5rem', 
+                                marginBottom: '1rem', 
+                                padding: '0.5rem',
+                                background: '#0f1a20',
+                                borderRadius: 6,
+                                flexWrap: 'wrap'
+                            }}>
                                 <button 
                                     type="button" 
-                                    onClick={() => setShowEmojiPicker(prev => !prev)}
-                                    style={{ background: 'none', border: '1px solid #7ae2cf', color: '#7ae2cf', fontSize: '0.8rem', cursor: 'pointer', padding: '0.25rem 0.5rem', borderRadius: 4 }}
+                                    onClick={() => handleCommentFormat('bold')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem',
+                                        fontWeight: 'bold'
+                                    }}
+                                    title="Bold"
                                 >
-                                    More
+                                    B
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('italic')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem',
+                                        fontStyle: 'italic'
+                                    }}
+                                    title="Italic"
+                                >
+                                    I
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('strikethrough')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem',
+                                        textDecoration: 'line-through'
+                                    }}
+                                    title="Strikethrough"
+                                >
+                                    S
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('bullet')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Bullet List"
+                                >
+                                    •
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('number')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Numbered List"
+                                >
+                                    1.
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('align_left')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Align Left"
+                                >
+                                    ⬅
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('align_center')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Align Center"
+                                >
+                                    ↔
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('align_right')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Align Right"
+                                >
+                                    ➡
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('code')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Code Block"
+                                >
+                                    &lt;/&gt;
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('link')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Link"
+                                >
+                                    🔗
+                                </button>
+                                <button 
+                                    type="button" 
+                                    onClick={() => handleCommentFormat('image')}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Image"
+                                >
+                                    📷
+                                </button>
+                                
+                                {/* Emoji Picker Button */}
+                                <div className="emoji-picker-container" style={{ position: 'relative' }}>
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowCommentEmojiPicker(!showCommentEmojiPicker)}
+                                        className="toolbar-button"
+                                        style={{ 
+                                            background: showCommentEmojiPicker ? '#7ae2cf' : 'none', 
+                                            border: '1px solid #2d3748', 
+                                            color: showCommentEmojiPicker ? '#06202b' : '#f5eed', 
+                                            padding: '0.5rem',
+                                            borderRadius: 4,
+                                            cursor: 'pointer',
+                                            fontSize: '1rem'
+                                        }}
+                                        title="Insert Emoji"
+                                    >
+                                        😊
+                                    </button>
+                                    
+                                    {/* Comprehensive Emoji Picker */}
+                                    {showCommentEmojiPicker && (
+                                        <div className="emoji-picker" style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            background: '#1a2e37',
+                                            border: '1px solid #2d3748',
+                                            borderRadius: 8,
+                                            padding: '1rem',
+                                            zIndex: 1000,
+                                            width: '350px',
+                                            maxHeight: '400px',
+                                            overflowY: 'auto',
+                                            marginTop: '0.5rem',
+                                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                        }}>
+                                            {/* Category tabs */}
+                                            <div style={{ 
+                                                display: 'flex', 
+                                                gap: '0.25rem', 
+                                                marginBottom: '1rem', 
+                                                flexWrap: 'wrap',
+                                                borderBottom: '1px solid #2d3748',
+                                                paddingBottom: '0.5rem'
+                                            }}>
+                                                {Object.entries(EMOJI_CATEGORIES).map(([key, category]) => (
+                                                    <button
+                                                        key={key}
+                                                        type="button"
+                                                        onClick={() => setSelectedCommentEmojiCategory(key)}
+                                                        style={{
+                                                            background: selectedCommentEmojiCategory === key ? '#7ae2cf' : 'transparent',
+                                                            color: selectedCommentEmojiCategory === key ? '#06202b' : '#7ae2cf',
+                                                            border: '1px solid #7ae2cf',
+                                                            borderRadius: 4,
+                                                            padding: '0.25rem 0.5rem',
+                                                            fontSize: '0.75rem',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.2s'
+                                                        }}
+                                                    >
+                                                        {category.name.split(' ')[0]}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                            
+                                            {/* Emoji grid */}
+                                            <div style={{ 
+                                                display: 'grid', 
+                                                gridTemplateColumns: 'repeat(8, 1fr)', 
+                                                gap: '0.25rem' 
+                                            }}>
+                                                {EMOJI_CATEGORIES[selectedCommentEmojiCategory].emojis.map((emoji, index) => (
+                                                    <button
+                                                        key={index}
+                                                        type="button"
+                                                        onClick={() => handleCommentEmojiInsert(emoji)}
+                                                        style={{
+                                                            background: 'none',
+                                                            border: 'none',
+                                                            fontSize: '1.2rem',
+                                                            cursor: 'pointer',
+                                                            padding: '0.25rem',
+                                                            borderRadius: 4,
+                                                            transition: 'background 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => e.target.style.background = 'rgba(122, 226, 207, 0.1)'}
+                                                        onMouseLeave={(e) => e.target.style.background = 'none'}
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Preview Toggle */}
+                                <button 
+                                    type="button" 
+                                    onClick={() => setShowCommentPreview(!showCommentPreview)}
+                                    className="toolbar-button"
+                                    style={{ 
+                                        background: showCommentPreview ? '#7ae2cf' : 'none', 
+                                        border: '1px solid #2d3748', 
+                                        color: showCommentPreview ? '#06202b' : '#f5eed', 
+                                        padding: '0.5rem',
+                                        borderRadius: 4,
+                                        cursor: 'pointer',
+                                        fontSize: '1rem'
+                                    }}
+                                    title="Toggle Preview"
+                                >
+                                    👁
                                 </button>
                             </div>
                             
-                            {/* Extended emoji picker */}
-                            {showEmojiPicker && (
-                                <div style={{ 
-                                    position: 'absolute', 
-                                    top: '100%', 
-                                    left: 0, 
-                                    background: '#1a2e37', 
-                                    border: '1px solid #2d3748', 
-                                    borderRadius: 8, 
-                                    padding: '1rem', 
-                                    zIndex: 1000,
-                                    width: '300px',
-                                    maxHeight: '400px',
-                                    overflowY: 'auto',
-                                    marginTop: '0.5rem'
-                                }}>
-                                    {/* Category tabs */}
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                                        {Object.entries(EMOJI_CATEGORIES).map(([key, category]) => (
-                                            <button
-                                                key={key}
-                                                type="button"
-                                                onClick={() => setSelectedEmojiCategory(key)}
-                                                style={{
-                                                    background: selectedEmojiCategory === key ? '#7ae2cf' : 'transparent',
-                                                    color: selectedEmojiCategory === key ? '#06202b' : '#7ae2cf',
-                                                    border: '1px solid #7ae2cf',
-                                                    borderRadius: 4,
-                                                    padding: '0.25rem 0.5rem',
-                                                    fontSize: '0.8rem',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                {category.name.split(' ')[0]}
-                                            </button>
-                                        ))}
-                                    </div>
-                                    
-                                    {/* Emoji grid */}
-                                    <div style={{ 
-                                        display: 'grid', 
-                                        gridTemplateColumns: 'repeat(8, 1fr)', 
-                                        gap: '0.25rem' 
-                                    }}>
-                                        {EMOJI_CATEGORIES[selectedEmojiCategory].emojis.map((emoji, index) => (
-                                            <button
-                                                key={index}
-                                                type="button"
-                                                onClick={() => {
-                                                    handleAddEmoji(emoji);
-                                                    setShowEmojiPicker(false);
-                                                }}
-                                                style={{
-                                                    background: 'none',
-                                                    border: 'none',
-                                                    fontSize: '1.2rem',
-                                                    cursor: 'pointer',
-                                                    padding: '0.25rem',
-                                                    borderRadius: 4,
-                                                    transition: 'background 0.2s'
-                                                }}
-                                                onMouseEnter={(e) => e.target.style.background = 'rgba(122, 226, 207, 0.1)'}
-                                                onMouseLeave={(e) => e.target.style.background = 'none'}
-                                            >
-                                                {emoji}
-                                            </button>
-                                        ))}
-                                    </div>
+                            {/* Comment Input Area */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                {!showCommentPreview ? (
+                                    <textarea
+                                        ref={commentTextAreaRef}
+                                        id="comment-content"
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        placeholder="Write your comment here... Use the toolbar for formatting!"
+                                        style={{
+                                            width: '100%',
+                                            minHeight: '120px',
+                                            padding: '1rem',
+                                            borderRadius: 6,
+                                            border: '1px solid #2d3748',
+                                            background: '#06202b',
+                                            color: '#f5eed',
+                                            fontSize: '1rem',
+                                            lineHeight: '1.5',
+                                            resize: 'vertical',
+                                            fontFamily: 'inherit'
+                                        }}
+                                    />
+                                ) : (
+                                    <div 
+                                        style={{
+                                            width: '100%',
+                                            minHeight: '120px',
+                                            padding: '1rem',
+                                            borderRadius: 6,
+                                            border: '1px solid #2d3748',
+                                            background: '#06202b',
+                                            color: '#f5eed',
+                                            fontSize: '1rem',
+                                            lineHeight: '1.5'
+                                        }}
+                                        dangerouslySetInnerHTML={{
+                                            __html: newComment
+                                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                                .replace(/_(.*?)_/g, '<em>$1</em>')
+                                                .replace(/~~(.*?)~~/g, '<del>$1</del>')
+                                                .replace(/`(.*?)`/g, '<code style="background: #2d3748; padding: 0.2rem 0.4rem; border-radius: 3px;">$1</code>')
+                                                .replace(/\n/g, '<br>')
+                                        }}
+                                    />
+                                )}
+                                
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <button 
+                                        onClick={handleAddComment} 
+                                        disabled={!newComment.trim()}
+                                        style={{ 
+                                            background: newComment.trim() ? '#7ae2cf' : '#2d3748', 
+                                            color: newComment.trim() ? '#06202b' : '#666', 
+                                            borderRadius: 6, 
+                                            padding: '0.75rem 1.5rem', 
+                                            fontWeight: 500, 
+                                            border: 'none', 
+                                            fontSize: '1rem', 
+                                            cursor: newComment.trim() ? 'pointer' : 'not-allowed',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        Post Comment
+                                    </button>
+                                    <span style={{ fontSize: '0.875rem', color: '#888' }}>
+                                        {newComment.length} characters
+                                    </span>
                                 </div>
-                            )}
+                            </div>
                         </div>
                     </div>
                 </div>
