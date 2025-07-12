@@ -1,234 +1,223 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { MOCK_QUESTIONS, filterQuestions, searchQuestions } from '../utils/mockData';
+import './StackItInterface.css';
 
 export default function StackItInterface() {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedFilter, setSelectedFilter] = useState('Newest');
   const [searchTerm, setSearchTerm] = useState('');
+  const [questions, setQuestions] = useState([]);
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const questions = [
-    {
-      title: "How to join 2 columns in a data set to make a separate column in SQL",
-      description: "I do not know the code for it as I am a beginner. As an example what I need to do is like there is a column 1 containing First name and column 2 consists of last name I want a column to combine ...",
-      username: "User Name",
-      tags: ["Tags", "Tags"],
-      timeAgo: "5 ans",
-      answers: 0
-    },
-    {
-      title: "Question.....",
-      description: "Descriptions.....",
-      username: "User Name",
-      tags: ["Tags", "Tags"],
-      timeAgo: "3 ans",
-      answers: 0
-    },
-    {
-      title: "Question.....",
-      description: "Descriptions.....",
-      username: "User Name",
-      tags: ["Tags", "Tags"],
-      timeAgo: "2 ans",
-      answers: 0
-    }
-  ];
-
+  const itemsPerPage = 5;
   const filters = ['Newest', 'Unanswered', 'Active', 'Votes'];
 
-  return (
-    <div className="min-h-screen" style={{ backgroundColor: '#06202B' }}>
-      {/* Header */}
-      <div className="p-6 border-b border-gray-600">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold" style={{ color: '#F5EEDD' }}>
-            StackIt
-          </h1>
-          <button 
-            className="px-6 py-2 rounded-full border-2 text-sm font-medium hover:opacity-80 transition-opacity"
-            style={{ 
-              borderColor: '#7AE2CF',
-              color: '#7AE2CF'
-            }}
-          >
-            Login
-          </button>
-        </div>
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      setQuestions(MOCK_QUESTIONS);
+      setFilteredQuestions(MOCK_QUESTIONS);
+      setIsLoading(false);
+    }, 500);
+  }, []);
 
-        {/* Navigation Bar */}
-        <div className="flex items-center gap-4 mb-6">
-          <button 
-            className="px-4 py-2 rounded-lg text-sm font-medium hover:opacity-80 transition-opacity"
-            style={{ 
-              backgroundColor: '#077A7D',
-              color: '#F5EEDD'
-            }}
-          >
-            Ask New Question
-          </button>
-          
-          <div className="flex items-center gap-2">
-            {filters.map((filter) => (
-              <button
-                key={filter}
-                onClick={() => setSelectedFilter(filter)}
-                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  selectedFilter === filter 
-                    ? 'opacity-100' 
-                    : 'opacity-70 hover:opacity-90'
-                }`}
-                style={{ 
-                  backgroundColor: selectedFilter === filter ? '#077A7D' : 'transparent',
-                  color: '#F5EEDD',
-                  border: selectedFilter === filter ? 'none' : `1px solid #7AE2CF`
-                }}
-              >
-                {filter}
-              </button>
-            ))}
-            
-            <button className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm opacity-70 hover:opacity-90 transition-opacity">
-              <span style={{ color: '#F5EEDD' }}>more</span>
-              <ChevronDown size={16} style={{ color: '#F5EEDD' }} />
-            </button>
-          </div>
+  useEffect(() => {
+    let result = [...questions];
+    // Apply filter
+    result = filterQuestions(result, selectedFilter);
+    // Apply search
+    result = searchQuestions(result, searchTerm);
+    setFilteredQuestions(result);
+    setCurrentPage(1); // Reset to first page when filter/search changes
+  }, [selectedFilter, searchTerm, questions]);
 
-          <div className="ml-auto relative">
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-4 pr-10 py-2 rounded-lg border text-sm w-64 focus:outline-none focus:ring-2 transition-all"
-              style={{ 
-                backgroundColor: '#F5EEDD',
-                borderColor: '#7AE2CF',
-                color: '#06202B'
-              }}
-            />
-            <Search 
-              size={18} 
-              className="absolute right-3 top-2.5 opacity-60"
-              style={{ color: '#06202B' }}
-            />
-          </div>
-        </div>
+  const handleSearch = (e) => {
+    e.preventDefault();
+    // Search is already handled by the useEffect above
+    console.log('Searching for:', searchTerm);
+  };
 
-        {/* Screen 1 Home Page Label */}
-        <div className="text-lg font-medium mb-4" style={{ color: '#F5EEDD' }}>
-          Screen 1
-        </div>
-        <div className="text-base mb-4" style={{ color: '#7AE2CF' }}>
-          Home Page
-        </div>
-        
-        {/* User can see questions without login note */}
-        <div className="text-sm mb-4 opacity-80" style={{ color: '#F5EEDD' }}>
-          User can see questions without login
-        </div>
-        
-        {/* Filters label */}
-        <div className="text-sm mb-6 opacity-80" style={{ color: '#F5EEDD' }}>
-          Filters
-        </div>
+  const handleFilterClick = (filter) => {
+    setSelectedFilter(filter);
+  };
+
+  // Pagination
+  const totalPages = Math.ceil(filteredQuestions.length / itemsPerPage);
+  const currentQuestions = filteredQuestions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const renderPaginationButtons = () => {
+    const buttons = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`page-button ${currentPage === i ? 'active' : ''}`}
+        >
+          {i}
+        </button>
+      );
+    }
+    return buttons;
+  };
+
+  if (isLoading) {
+    return (
+      <div className="stackit-container">
+        <div className="loading-screen">Loading questions...</div>
       </div>
+    );
+  }
 
-      {/* Questions List */}
-      <div className="p-6">
-        <div className="space-y-4">
-          {questions.map((question, index) => (
-            <div 
-              key={index}
-              className="p-4 rounded-lg border hover:opacity-90 transition-opacity cursor-pointer"
-              style={{ 
-                backgroundColor: '#077A7D',
-                borderColor: '#7AE2CF'
-              }}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-medium pr-4" style={{ color: '#F5EEDD' }}>
-                  {question.title}
-                </h3>
-                <div className="flex items-center gap-2 text-sm shrink-0">
-                  <span style={{ color: '#F5EEDD' }}>{question.timeAgo}</span>
+  return (
+    <div className="stackit-container">
+      <header className="header">
+        <div className="nav-section">
+          <div className="top-bar">
+            <h1 className="brand">StackIt</h1>
+            <button className="login-button">Login</button>
+          </div>
+
+          <div className="nav-bar">
+            <div className="nav-buttons">
+              <button 
+                className="ask-question-button"
+                onClick={() => navigate('/add')}
+              >
+                Ask New Question
+              </button>
+              
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => handleFilterClick(filter)}
+                  className={`filter-button ${selectedFilter === filter ? 'active' : ''}`}
+                >
+                  {filter}
+                </button>
+              ))}
+              
+              <button className="more-button">
+                <span>more</span>
+                <ChevronDown size={16} />
+              </button>
+            </div>
+
+            <form className="search-container" onSubmit={handleSearch}>
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+              <Search size={18} className="search-icon" />
+            </form>
+          </div>
+
+          <div className="section-labels">
+            <div className="screen-label">Screen 1</div>
+            <div className="page-label">Home Page</div>
+            <div className="info-text">User can see questions without login</div>
+            <div className="info-text">Filters</div>
+          </div>
+        </div>
+      </header>
+
+      <main className="questions-container">
+        <div className="questions-grid">
+          {currentQuestions.length > 0 ? (
+            currentQuestions.map((question) => (
+              <article 
+                key={question.id} 
+                className="question-card"
+                onClick={() => navigate(`/question/${question.id}`)}
+              >
+                <div className="question-header">
+                  <h3 className="question-title">{question.title}</h3>
+                  <span className="time-ago">{question.timeAgo}</span>
                 </div>
-              </div>
-              
-              <p className="text-sm mb-3 opacity-90" style={{ color: '#F5EEDD' }}>
-                {question.description}
-              </p>
-              
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex gap-2">
+                
+                <p className="question-description">{question.description}</p>
+                
+                <div className="question-footer">
+                  <div className="tags-container">
                     {question.tags.map((tag, tagIndex) => (
                       <span 
-                        key={tagIndex}
-                        className="px-2 py-1 rounded text-xs border"
-                        style={{ 
-                          backgroundColor: 'transparent',
-                          borderColor: '#7AE2CF',
-                          color: '#7AE2CF'
+                        key={tagIndex} 
+                        className="tag"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchTerm(tag);
                         }}
                       >
                         {tag}
                       </span>
                     ))}
+                    <span className="username">{question.username}</span>
                   </div>
-                  <span className="text-sm opacity-80" style={{ color: '#F5EEDD' }}>
-                    {question.username}
-                  </span>
+                  
+                  <div className="answers-count">
+                    {question.answers} answers
+                  </div>
                 </div>
-                
-                <div className="text-sm" style={{ color: '#7AE2CF' }}>
-                  {question.answers} answers
-                </div>
-              </div>
+              </article>
+            ))
+          ) : (
+            <div className="no-results">
+              No questions found matching your criteria
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-center gap-2 mt-8">
-          <button 
-            className="p-2 rounded hover:opacity-80 transition-opacity"
-            style={{ color: '#7AE2CF' }}
-            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          >
-            <ChevronLeft size={18} />
-          </button>
-          
-          {[1, 2, 3, 4, 5, 6, 7].map((page) => (
-            <button
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1 rounded text-sm font-medium transition-all ${
-                currentPage === page 
-                  ? 'opacity-100' 
-                  : 'opacity-70 hover:opacity-90'
-              }`}
-              style={{ 
-                backgroundColor: currentPage === page ? '#7AE2CF' : 'transparent',
-                color: currentPage === page ? '#06202B' : '#F5EEDD'
-              }}
-            >
-              {page}
-            </button>
-          ))}
-          
-          <button 
-            className="p-2 rounded hover:opacity-80 transition-opacity"
-            style={{ color: '#7AE2CF' }}
-            onClick={() => setCurrentPage(Math.min(7, currentPage + 1))}
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
-        
-        {/* Pagination Label */}
-        <div className="text-center text-sm mt-2 opacity-80" style={{ color: '#F5EEDD' }}>
-          Pagination
-        </div>
-      </div>
+        {filteredQuestions.length > itemsPerPage && (
+          <div className="pagination-container">
+            <div className="pagination">
+              <button 
+                className="page-button"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft size={18} />
+              </button>
+              
+              {renderPaginationButtons()}
+              
+              <button 
+                className="page-button"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            
+            <div className="pagination-label">Pagination</div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
