@@ -103,3 +103,66 @@
     font-size: 1rem;
   }
 }
+
+/* Enhanced Mobile Responsive Design for Hamburger Nav */
+@media (max-width: 768px) {
+  .hamburger-nav {
+    padding: 0.4rem 1rem;
+  }
+  
+  .nav-logo {
+    font-size: 1.25rem;
+  }
+  
+  .hamburger-btn {
+    padding: 0.4rem;
+  }
+  
+  .hamburger {
+    width: 24px;
+    height: 2px;
+  }
+  
+  .hamburger::before,
+  .hamburger::after {
+    width: 24px;
+    height: 2px;
+  }
+  
+  .hamburger::before {
+    top: -6px;
+  }
+  
+  .hamburger::after {
+    bottom: -6px;
+  }
+  
+  .nav-links {
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  
+  .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border-bottom: 1px solid rgba(245, 238, 221, 0.1);
+  }
+}
+
+@media (max-width: 480px) {
+  .hamburger-nav {
+    padding: 0.3rem 0.75rem;
+  }
+  
+  .nav-logo {
+    font-size: 1.1rem;
+  }
+  
+  .nav-link {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+  }
+}

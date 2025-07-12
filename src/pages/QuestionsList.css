@@ -298,3 +298,102 @@
     gap: 0.5rem;
     margin-top: 0.5rem;
 }
+
+/* Enhanced Mobile Responsive Design for Questions List */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+        padding: 0 0.75rem;
+        gap: 1rem;
+    }
+    
+    .questions-section {
+        order: 1;
+    }
+    
+    .sidebar {
+        order: 2;
+        margin-top: 0;
+    }
+    
+    .questions-list {
+        gap: 0.75rem;
+    }
+    
+    .question-card {
+        padding: 1rem;
+        border-radius: 6px;
+    }
+    
+    .question-title {
+        font-size: 1.1rem;
+        line-height: 1.4;
+    }
+    
+    .question-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+    
+    .question-tags {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+    
+    .question-desc {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-top: 0.5rem;
+    }
+    
+    .popular-tags-box {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .tag-item {
+        font-size: 0.85em;
+        padding: 0.2rem 0.6rem;
+    }
+}
+
+/* Additional improvements for very small screens */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 0 0.5rem;
+    }
+    
+    .question-card {
+        padding: 0.75rem;
+    }
+    
+    .question-title {
+        font-size: 1rem;
+    }
+    
+    .question-desc {
+        font-size: 0.9rem;
+    }
+    
+    .popular-tags-box {
+        padding: 0.75rem;
+    }
+}
+
+/* Tablet responsive design */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .header-content, .main-content {
+        max-width: 100%;
+        padding: 0 2rem;
+    }
+    
+    .questions-section {
+        flex: 2;
+    }
+    
+    .sidebar {
+        flex: 1;
+        max-width: 300px;
+    }
+}

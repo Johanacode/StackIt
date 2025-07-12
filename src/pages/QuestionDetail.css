@@ -1,7 +1,7 @@
 .question-detail-container {
     background: #06202b;
     min-height: 100vh;
-    color: #f5eed;
+    color: #ffffff;
 }
 .header {
     padding: 1rem 2rem;
@@ -29,12 +29,12 @@
     justify-content: center;
 }
 .brand {
-    color: #f5eed;
+    color: #ffffff;
     font-size: 1.5rem;
     font-weight: 600;
 }
 .brand-description {
-    color: #f5eed;
+    color: #ffffff;
     opacity: 0.7;
     font-size: 0.875rem;
 }
@@ -91,7 +91,119 @@
     font-size: 0.95em;
 }
 .question-desc {
-    color: #f5eed;
+    color: #ffffff;
     opacity: 0.85;
     font-size: 1rem;
+}
+
+/* Mobile Responsive Design for Question Detail */
+@media (max-width: 768px) {
+    .header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .header-content {
+        max-width: 100%;
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .logo-section {
+        justify-content: center;
+        gap: 0.75rem;
+    }
+    
+    .logo {
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .brand {
+        font-size: 1.25rem;
+    }
+    
+    .brand-description {
+        font-size: 0.8rem;
+        text-align: center;
+    }
+    
+    .header-actions {
+        justify-content: center;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .ask-button, .back-button {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.9rem;
+        flex: 1;
+        min-width: 120px;
+    }
+    
+    .question-detail-box {
+        margin: 1rem;
+        padding: 1.25rem;
+        border-radius: 6px;
+    }
+    
+    .question-title {
+        font-size: 1.25rem;
+        line-height: 1.4;
+    }
+    
+    .question-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+        align-items: flex-start;
+    }
+    
+    .question-tags {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+    
+    .tag-item {
+        padding: 0.15rem 0.5rem;
+        font-size: 0.85em;
+        border-radius: 8px;
+    }
+    
+    .question-desc {
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .brand {
+        font-size: 1.1rem;
+    }
+    
+    .brand-description {
+        font-size: 0.75rem;
+    }
+    
+    .ask-button, .back-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+    
+    .question-detail-box {
+        margin: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .question-title {
+        font-size: 1.1rem;
+    }
+    
+    .question-desc {
+        font-size: 0.9rem;
+    }
 }

@@ -1,0 +1,287 @@
+/* Enhanced Mobile-First Responsive Design */
+
+/* Base Mobile Styles (320px and up) */
+@media (max-width: 480px) {
+  /* Global container adjustments */
+  .container {
+    padding: 0 0.5rem !important;
+  }
+  
+  /* Typography adjustments */
+  h1 { font-size: 1.25rem !important; }
+  h2 { font-size: 1.1rem !important; }
+  h3 { font-size: 1rem !important; }
+  
+  /* Button adjustments */
+  button {
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.875rem !important;
+    min-height: 44px !important;
+  }
+  
+  /* Input adjustments */
+  input, textarea, select {
+    min-height: 44px !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+    padding: 0.5rem !important;
+  }
+}
+
+/* Mobile Tablet Styles (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+  .container {
+    padding: 0 1rem !important;
+  }
+  
+  /* Flexible grid layouts */
+  .main-content {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  /* Card adjustments */
+  .question-card, .question-detail-box {
+    padding: 1rem !important;
+    margin: 0.5rem !important;
+    border-radius: 6px !important;
+  }
+}
+
+/* Tablet Styles (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding: 0 1.5rem !important;
+  }
+  
+  /* Header adjustments */
+  .header-content {
+    padding: 0 1rem !important;
+  }
+  
+  /* Navigation adjustments */
+  .nav-buttons {
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+}
+
+/* Questions List Mobile Styles */
+@media (max-width: 768px) {
+  .questions-list-container .main-content {
+    flex-direction: column !important;
+    padding: 0 1rem !important;
+  }
+  
+  .questions-section {
+    order: 1 !important;
+  }
+  
+  .sidebar {
+    order: 2 !important;
+    margin-top: 1rem !important;
+  }
+  
+  .question-card {
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+  
+  .question-title {
+    font-size: 1.1rem !important;
+    line-height: 1.4 !important;
+  }
+  
+  .question-meta {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+    align-items: flex-start !important;
+  }
+  
+  .question-tags {
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+  }
+  
+  .tag-item {
+    font-size: 0.8rem !important;
+    padding: 0.2rem 0.6rem !important;
+  }
+}
+
+/* Question Detail Mobile Styles */
+@media (max-width: 768px) {
+  .question-detail-container .header {
+    padding: 0.75rem 1rem !important;
+  }
+  
+  .question-detail-container .header-content {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    align-items: stretch !important;
+  }
+  
+  .question-detail-container .header-actions {
+    justify-content: center !important;
+    gap: 0.75rem !important;
+    flex-wrap: wrap !important;
+  }
+  
+  .ask-button, .back-button {
+    flex: 1 !important;
+    min-width: 120px !important;
+    padding: 0.6rem 1rem !important;
+  }
+  
+  .question-detail-box {
+    margin: 1rem !important;
+    padding: 1.25rem !important;
+  }
+}
+
+/* Stack Interface Mobile Styles */
+@media (max-width: 768px) {
+  .stackit-container .header {
+    padding: 1rem !important;
+  }
+  
+  .stackit-container .top-bar {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .stackit-container .nav-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+  
+  .stackit-container .nav-buttons {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+  
+  .stackit-container .nav-button {
+    flex: 1 !important;
+    min-width: 120px !important;
+  }
+  
+  .stackit-container .search-container {
+    width: 100% !important;
+    margin-left: 0 !important;
+    order: -1 !important;
+  }
+  
+  .stackit-container .questions-container {
+    padding: 1rem !important;
+  }
+}
+
+/* Hamburger Navigation Mobile Styles */
+@media (max-width: 768px) {
+  .hamburger-nav {
+    padding: 0.5rem 1rem !important;
+  }
+  
+  .nav-logo {
+    font-size: 1.25rem !important;
+  }
+  
+  .nav-links {
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+  }
+  
+  .nav-link {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.95rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+}
+
+/* Form Elements Mobile Styles */
+@media (max-width: 768px) {
+  .upload-container input,
+  .upload-container textarea,
+  .upload-container select {
+    width: 100% !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .upload-container .form-group {
+    margin-bottom: 1rem !important;
+  }
+  
+  .upload-container button {
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+}
+
+/* Pagination Mobile Styles */
+@media (max-width: 768px) {
+  .pagination-container {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    padding: 1rem !important;
+  }
+  
+  .pagination-buttons {
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    flex-wrap: wrap !important;
+  }
+  
+  .page-button {
+    min-width: 40px !important;
+    padding: 0.5rem !important;
+  }
+}
+
+/* Utility Classes for Mobile */
+@media (max-width: 768px) {
+  .mobile-hide {
+    display: none !important;
+  }
+  
+  .mobile-full-width {
+    width: 100% !important;
+  }
+  
+  .mobile-center {
+    text-align: center !important;
+  }
+  
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+}
+
+/* Touch-friendly improvements */
+@media (max-width: 768px) {
+  /* Increase touch targets */
+  a, button, input[type="submit"], input[type="button"] {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+  
+  /* Improve spacing for touch */
+  .nav-link, .question-card, .tag-item {
+    margin-bottom: 0.25rem !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .hamburger-nav,
+  .sidebar,
+  .pagination-container {
+    display: none !important;
+  }
+  
+  .question-detail-box,
+  .question-card {
+    break-inside: avoid !important;
+  }
+}
