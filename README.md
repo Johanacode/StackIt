@@ -1,8 +1,10 @@
 StackIt – A Minimal QnA Forum
+
 StackIt is a minimal yet powerful QnA forum platform designed for community interaction.
 Built with React + Vite, Node.js, and Firebase, StackIt allows users to post questions, provide answers, vote, and browse as guests.
 
 Features
+
 User authentication via Firebase (Email/Password and OAuth)
 Ask questions using Markdown formatting
 Answer and vote on posts (upvotes/downvotes)
